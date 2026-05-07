@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GL Prime — Igor Andrade Arquitetura</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--bg2:#fff;--bg3:#eceae4;--bg4:#e2e0d8;
+  --text:#1a1a18;--text2:#6a6860;--text3:#a8a49c;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.14);
+  --green:#1a7a4a;--gbg:#edf7f2;--glt:#c8ead8;
+  --yellow:#8a5e00;--ybg:#fdf6e3;--ylt:#f5dfa0;
+  --red:#b83232;--rbg:#fdf0f0;--rlt:#f5c0c0;
+  --blue:#1a4fa8;--bbg:#eef3fd;--blt:#c0d5f8;
+  --r:8px;--rl:14px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#131311;--bg2:#1c1c19;--bg3:#232320;--bg4:#2c2c28;
+  --text:#f0ede6;--text2:#9a9690;--text3:#585450;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.15);
+  --green:#4ade80;--gbg:rgba(74,222,128,.09);--glt:rgba(74,222,128,.22);
+  --yellow:#fbbf24;--ybg:rgba(251,191,36,.09);--ylt:rgba(251,191,36,.22);
+  --red:#f87171;--rbg:rgba(248,113,113,.09);--rlt:rgba(248,113,113,.22);
+  --blue:#60a5fa;--bbg:rgba(96,165,250,.09);--blt:rgba(96,165,250,.22);
+}}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.shell{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sb{width:220px;background:var(--bg2);border-right:0.5px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:20;transition:transform .2s}
+.sb-top{padding:1.25rem;border-bottom:0.5px solid var(--border)}
+.sb-brand{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.sb-name{font-size:15px;font-weight:500;color:var(--text)}
+.sb-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.sb-filter{padding:.75rem 1rem;border-bottom:0.5px solid var(--border)}
+.sb-filter label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:5px}
+.sb-filter select{width:100%;padding:6px 8px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text);font-size:12px;font-family:inherit}
+.sb-nav{flex:1;padding:.5rem 0;overflow-y:auto}
+.sb-grp{padding:.75rem 1rem .2rem;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.1em}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:7px 1rem;font-size:13px;color:var(--text2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;transition:all .12s;position:relative}
+.sb-btn:hover{color:var(--text);background:var(--bg3)}
+.sb-btn.on{color:var(--text);font-weight:500;background:var(--bg3)}
+.sb-btn.on::before{content:'';position:absolute;left:0;top:18%;bottom:18%;width:2px;background:var(--text);border-radius:0 2px 2px 0}
+.sb-btn .ico{font-size:14px;width:16px;text-align:center;flex-shrink:0}
+.sb-bottom{padding:1rem;border-top:0.5px solid var(--border)}
+.sb-sync{font-size:11px;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+.sync-dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;padding:2rem 2.5rem}
+.pane{display:none}.pane.on{display:block}
+
+/* PAGE HEADER */
+.ph{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.75rem}
+.ph h1{font-size:22px;font-weight:300;letter-spacing:-.02em}
+.ph .sub{font-size:12px;color:var(--text3);margin-top:2px}
+.ph-r{display:flex;gap:8px;align-items:center}
+
+/* SECTIONS */
+.sec{margin-bottom:1.75rem}
+.sec-lbl{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:7px;border-bottom:0.5px solid var(--border)}
+
+/* METRICS */
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mc{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rl);padding:15px 16px}
+.mc .lbl{font-size:10.5px;color:var(--text3);margin-bottom:7px;letter-spacing:.02em}
+.mc .val{font-size:21px;font-weight:300;line-height:1;letter-spacing:-.02em}
+.mc .sub{font-size:11px;color:var(--text3);margin-top:5px}
+
+/* CARDS */
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:10px}
+
+/* ALERTS */
+.alert{border-radius:0 var(--r) var(--r) 0;padding:9px 13px;font-size:12.5px;margin-bottom:7px;border-left:3px solid;line-height:1.6}
+.ag{background:var(--gbg);color:var(--green);border-color:var(--green)}
+.ay{background:var(--ybg);color:var(--yellow);border-color:var(--yellow)}
+.ar{background:var(--rbg);color:var(--red);border-color:var(--red)}
+.ab{background:var(--bbg);color:var(--blue);border-color:var(--blue)}
+
+/* BADGES */
+.bx{display:inline-block;font-size:10.5px;font-weight:500;padding:2px 8px;border-radius:20px}
+.bx-g{background:var(--glt);color:var(--green)}
+.bx-y{background:var(--ylt);color:var(--yellow)}
+.bx-r{background:var(--rlt);color:var(--red)}
+.bx-b{background:var(--blt);color:var(--blue)}
+.bx-n{background:var(--bg3);color:var(--text2);border:0.5px solid var(--border)}
+
+/* COLORS */
+.cv{color:var(--green)}.rv{color:var(--red)}.yv{color:var(--yellow)}.bv{color:var(--blue)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font-size:10px;font-weight:500;color:var(--text3);padding:6px 8px;border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+td{padding:9px 8px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg3)}
+
+/* FORMS */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.il{display:flex;flex-direction:column;gap:4px}
+.il label{font-size:11px;font-weight:500;color:var(--text2)}
+input,select,textarea{width:100%;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg3);color:var(--text);font-size:12.5px;font-family:inherit;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--text2);background:var(--bg2)}
+textarea{resize:vertical;min-height:60px}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:12.5px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn:hover{background:var(--bg4)}
+.btn-p{background:var(--text);color:var(--bg2);border-color:var(--text)}
+.btn-p:hover{opacity:.85}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-r{background:var(--rbg);color:var(--red);border-color:var(--rlt)}
+.btn-exp{background:var(--bbg);color:var(--blue);border-color:var(--blt)}
+.btn-ai{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none}
+.btn-ai:hover{opacity:.9}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+
+/* PROGRESS */
+.bar-w{height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:5px}
+.bar-f{height:100%;border-radius:3px;transition:width .5s}
+
+/* CONCILIAÇÃO IA */
+.conc-drop{border:2px dashed var(--border2);border-radius:var(--rl);padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3)}
+.conc-drop:hover,.conc-drop.drag{border-color:var(--blue);background:var(--bbg)}
+.conc-drop .ico{font-size:32px;margin-bottom:8px;color:var(--text3)}
+.conc-drop .title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.conc-drop .sub{font-size:12px;color:var(--text3)}
+.conc-result{margin-top:1rem}
+.conc-item{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:var(--r);margin-bottom:8px;border:0.5px solid var(--border)}
+.conc-item.ok{background:var(--gbg);border-color:var(--glt)}
+.conc-item.div{background:var(--ybg);border-color:var(--ylt)}
+.conc-item.novo{background:var(--rbg);border-color:var(--rlt)}
+.conc-ico{font-size:16px;flex-shrink:0;margin-top:1px}
+.conc-txt{flex:1}
+.conc-txt .t{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.conc-txt .s{font-size:11px;color:var(--text2)}
+.ai-thinking{display:flex;align-items:center;gap:10px;padding:1rem;background:var(--bg3);border-radius:var(--r);font-size:13px;color:var(--text2)}
+.ai-spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--text2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* HISTÓRIA */
+.hist-item{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);align-items:flex-start}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px}
+.hist-ts{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* INDICADORES CHART */
+.chart-wrap{position:relative;width:100%;height:260px}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:13px;font-style:italic}
+.loading-row{text-align:center;padding:1.5rem;color:var(--text3);font-size:12.5px}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:var(--bg2);padding:10px 16px;border-radius:var(--r);font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:999;max-width:280px}
+#toast.show{opacity:1}
+
+/* MOBILE */
+.menu-toggle{display:none;position:fixed;top:1rem;left:1rem;z-index:30;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--r);padding:7px 10px;cursor:pointer;font-size:16px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:15}
+
+/* PRINT */
+@media print{
+  .sb,.menu-toggle,.btn,.ph-r,#toast{display:none!important}
+  .main{margin-left:0!important;padding:1rem!important}
+  .pane{display:none!important}
+  #print-view{display:block!important}
+}
+@media(max-width:768px){
+  .sb{transform:translateX(-100%)}.sb.open{transform:translateX(0)}
+  .main{margin-left:0;padding:1rem}
+  .menu-toggle{display:flex}
+  .overlay.show{display:block}
+  .g2,.g3,.fg{grid-template-columns:1fr}
+  .ph{flex-direction:column;align-items:flex-start;gap:10px}
+}
+</style>
+</head>
+<body>
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<div class="overlay" id="ov" onclick="toggleMenu()"></div>
+
+<div class="shell">
+<aside class="sb" id="sb">
+  <div class="sb-top">
+    <div class="sb-brand">GL Prime · BPO</div>
+    <div class="sb-name">Igor Andrade</div>
+    <div class="sb-sub">Arquitetura · <span id="mes-label">Todos os meses</span></div>
+  </div>
+
+  <div class="sb-filter">
+    <label>Filtrar por período</label>
+    <select id="filtro-mes" onchange="filtrarMes()">
+      <option value="todos">Todos os meses</option>
+    </select>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-grp">Financeiro</div>
+    <button class="sb-btn on" onclick="nav(this,'p-painel')"><span class="ico">◈</span>Painel</button>
+    <button class="sb-btn" onclick="nav(this,'p-indicadores')"><span class="ico">↗</span>Indicadores</button>
+    <button class="sb-btn" onclick="nav(this,'p-caixa')"><span class="ico">⟳</span>Fluxo de caixa</button>
+    <button class="sb-btn" onclick="nav(this,'p-dre')"><span class="ico">∑</span>DRE</button>
+    <div class="sb-grp">Gestão</div>
+    <button class="sb-btn" onclick="nav(this,'p-conc')"><span class="ico">✦</span>Conciliação IA</button>
+    <button class="sb-btn" onclick="nav(this,'p-mov')"><span class="ico">⊞</span>Movimentações</button>
+    <button class="sb-btn" onclick="nav(this,'p-proj')"><span class="ico">◻</span>Projetos</button>
+    <button class="sb-btn" onclick="nav(this,'p-desp')"><span class="ico">↓</span>Despesas</button>
+    <div class="sb-grp">Operacional</div>
+    <button class="sb-btn" onclick="nav(this,'p-comercial')"><span class="ico">◎</span>Comercial</button>
+    <button class="sb-btn" onclick="nav(this,'p-rel')"><span class="ico">📄</span>Relatórios</button>
+    <button class="sb-btn" onclick="nav(this,'p-hist')"><span class="ico">⧖</span>Histórico</button>
+    <div class="sb-grp">Sistema</div>
+    <button class="sb-btn" onclick="nav(this,'p-cfg')"><span class="ico">⚙</span>Configurações</button>
+  </nav>
+
+  <div class="sb-bottom">
+    <div class="sb-sync"><div class="sync-dot" id="sync-dot"></div><span id="sync-txt">Conectando...</span></div>
+    <button class="btn btn-sm" style="width:100%" onclick="exportPDF()">Exportar PDF ↓</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- PAINEL -->
+<div class="pane on" id="p-painel">
+  <div class="ph"><div><h1>Painel</h1><div class="sub" id="painel-periodo">Visão geral</div></div>
+    <div class="ph-r"><button class="btn btn-exp" onclick="exportPDF()">Exportar PDF</button></div></div>
+  <div class="sec"><div class="g4" id="painel-metrics"></div></div>
+  <div class="sec"><div class="sec-lbl">Saúde financeira</div><div class="card" id="painel-saude"></div></div>
+  <div class="sec"><div class="sec-lbl">Alertas</div><div id="painel-alertas"></div></div>
+  <div class="sec"><div class="sec-lbl">Últimas movimentações</div>
+    <div class="card"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th></tr></thead>
+    <tbody id="painel-mov"></tbody></table></div></div>
+</div>
+
+<!-- INDICADORES HISTÓRICOS -->
+<div class="pane" id="p-indicadores">
+  <div class="ph"><div><h1>Indicadores</h1><div class="sub">Evolução histórica mês a mês</div></div></div>
+  <div class="sec"><div class="g4" id="ind-metrics"></div></div>
+  <div class="sec">
+    <div class="sec-lbl">Faturamento mensal — histórico completo</div>
+    <div class="card"><div class="chart-wrap"><canvas id="chart-ind" role="img" aria-label="Evolução mensal de entradas, saídas e resultado">Histórico mensal.</canvas></div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#1a7a4a"></span>Entradas</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#b83232"></span>Saídas</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#1a4fa8"></span>Resultado</span>
+      </div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="sec-lbl">Projetos por mês</div>
+    <div class="card"><div class="chart-wrap" style="height:180px"><canvas id="chart-proj-hist" role="img" aria-label="Quantidade de projetos por mês">Projetos por mês.</canvas></div></div>
+  </div>
+</div>
+
+<!-- FLUXO DE CAIXA -->
+<div class="pane" id="p-caixa">
+  <div class="ph"><div><h1>Fluxo de caixa</h1><div class="sub">Entradas, saídas e resultado por período</div></div>
+    <div class="ph-r"><button class="btn btn-exp" onclick="exportPDF()">Exportar PDF</button></div></div>
+  <div class="sec">
+    <div class="card"><div class="chart-wrap"><canvas id="chart-cx" role="img" aria-label="Fluxo de caixa mensal">Fluxo de caixa.</canvas></div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text3)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#1a7a4a"></span>Entradas</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#b83232"></span>Saídas</span>
+      </div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-lbl">Detalhamento</div>
+    <div class="card"><table><thead><tr><th>Mês</th><th>Entradas</th><th>Saídas</th><th>Resultado</th><th>Acumulado</th></tr></thead>
+    <tbody id="cx-tbody"></tbody></table></div></div>
+</div>
+
+<!-- DRE -->
+<div class="pane" id="p-dre">
+  <div class="ph"><div><h1>DRE</h1><div class="sub">Demonstrativo de resultado</div></div>
+    <div class="ph-r"><button class="btn btn-exp" onclick="exportPDF()">Exportar PDF</button></div></div>
+  <div class="sec"><div class="g2">
+    <div><div class="sec-lbl">Resultado do período</div><div class="card" id="dre-content"></div></div>
+    <div><div class="sec-lbl">Receita vs. Custos</div>
+      <div class="card"><div class="chart-wrap"><canvas id="chart-dre" role="img" aria-label="DRE visual">DRE.</canvas></div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- CONCILIAÇÃO IA -->
+<div class="pane" id="p-conc">
+  <div class="ph"><div><h1>Conciliação IA</h1><div class="sub">Cole o extrato — a IA cruza com os lançamentos e mostra só as divergências</div></div></div>
+
+  <div class="sec">
+    <div class="sec-lbl">Mês de referência da conciliação</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:1rem">
+      <select id="conc-mes-ref" style="max-width:200px">
+        <option value="2026-04">Abril 2026</option>
+        <option value="2026-03">Março 2026</option>
+        <option value="2026-05">Maio 2026</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-lbl">Cole o extrato bancário aqui</div>
+    <div class="card">
+      <div class="il" style="margin-bottom:10px">
+        <label>Texto do extrato (copie direto do app do banco ou PDF)</label>
+        <textarea id="extrato-texto" style="min-height:160px;font-family:'DM Mono',monospace;font-size:12px" placeholder="Cole aqui o extrato do Nubank, Inter ou outro banco.
+
+Exemplo:
+25/03 PIX recebido Marcelo R$ 490,00
+31/03 PIX enviado Duda Bianzeno -R$ 170,00
+01/04 PIX recebido Dayane Marques R$ 310,00
+06/04 Pagamento CAU -R$ 609,69
+..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ai" onclick="conciliarIA()">✦ Conciliar com IA</button>
+        <span style="font-size:11px;color:var(--text3)">A IA lê o extrato, cruza com os lançamentos e mostra só o que não bateu</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec" id="conc-result-sec" style="display:none">
+    <div class="sec-lbl">Resultado da conciliação</div>
+    <div id="conc-resumo-metrics" class="g4" style="margin-bottom:1rem"></div>
+    <div id="conc-result"></div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn btn-p" onclick="salvarConciliacao()" id="btn-salvar-conc">Salvar resultado no sistema</button>
+      <button class="btn" onclick="limparConc()">Limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVIMENTAÇÕES -->
+<div class="pane" id="p-mov">
+  <div class="ph"><div><h1>Movimentações</h1><div class="sub">Todas as entradas e saídas lançadas</div></div></div>
+  <div class="sec"><div class="sec-lbl">Lançamentos do período</div><div id="mov-lista"></div></div>
+  <div class="sec"><div class="sec-lbl">Novo lançamento</div>
+    <div class="card">
+      <div class="fg">
+        <div class="il"><label>Data</label><input type="date" id="m-data"></div>
+        <div class="il"><label>Tipo</label><select id="m-tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option><option value="rendimento">Rendimento Caixinha</option></select></div>
+        <div class="il"><label>Descrição</label><input type="text" id="m-desc" placeholder="Ex: Karine de Luca — fachada"></div>
+        <div class="il"><label>Categoria</label><select id="m-cat"><option>Venda de projeto</option><option>Imposto / ISS / Simples</option><option>Custo de projeto</option><option>Despesa fixa</option><option>Retirada / Pró-labore</option><option>Rendimento financeiro</option><option>Outro</option></select></div>
+        <div class="il"><label>Valor (R$)</label><input type="number" id="m-val" step="0.01" placeholder="0,00"></div>
+        <div class="il"><label>Status</label><select id="m-status"><option value="realizado">Realizado</option><option value="previsto">Previsto</option><option value="pendente">Pendente</option></select></div>
+        <div class="il"><label>Mês ref.</label><input type="month" id="m-mes"></div>
+        <div class="il"><label>Observação</label><input type="text" id="m-obs" placeholder="Opcional"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-p" onclick="addMov()">Salvar lançamento</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJETOS -->
+<div class="pane" id="p-proj">
+  <div class="ph"><div><h1>Projetos</h1><div class="sub">Carteira de projetos e margem por obra</div></div></div>
+  <div class="sec"><div class="sec-lbl">Projetos do período</div><div id="proj-lista"></div></div>
+  <div class="sec"><div class="sec-lbl">Cadastrar projeto</div>
+    <div class="card">
+      <div class="fg">
+        <div class="il"><label>Cliente</label><input type="text" id="pj-cli" placeholder="Nome do cliente"></div>
+        <div class="il"><label>Tipo</label><select id="pj-tipo"><option>Residencial</option><option>Comercial</option><option>Área da saúde</option><option>Interiores</option><option>Outro</option></select></div>
+        <div class="il"><label>Valor total (R$)</label><input type="number" id="pj-val" step="0.01" placeholder="0,00"></div>
+        <div class="il"><label>Entrada recebida (R$)</label><input type="number" id="pj-ent" step="0.01" placeholder="0,00"></div>
+        <div class="il"><label>Custo do projeto (R$)</label><input type="number" id="pj-custo" step="0.01" placeholder="0,00"></div>
+        <div class="il"><label>Metragem (m²)</label><input type="number" id="pj-m2" placeholder="opcional"></div>
+        <div class="il"><label>Data fechamento</label><input type="date" id="pj-data"></div>
+        <div class="il"><label>Mês ref.</label><input type="month" id="pj-mes"></div>
+        <div class="il"><label>Status</label><select id="pj-status"><option value="ativo">Ativo</option><option value="aguardando">Aguardando pgto</option><option value="concluido">Concluído</option></select></div>
+      </div>
+      <div class="il" style="margin-bottom:0"><label>Observações</label><textarea id="pj-obs"></textarea></div>
+      <div class="btn-row"><button class="btn btn-p" onclick="addProjeto()">Salvar projeto</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DESPESAS -->
+<div class="pane" id="p-desp">
+  <div class="ph"><div><h1>Despesas</h1><div class="sub">Registro e controle de saídas</div></div></div>
+  <div class="sec"><div class="sec-lbl">Despesas do período</div><div id="desp-lista"></div></div>
+  <div class="sec"><div class="sec-lbl">Registrar despesa</div>
+    <div class="card">
+      <div class="fg">
+        <div class="il"><label>Descrição</label><input type="text" id="d-desc" placeholder="Ex: ISS, Daniel Santo..."></div>
+        <div class="il"><label>Valor (R$)</label><input type="number" id="d-val" step="0.01" placeholder="0,00"></div>
+        <div class="il"><label>Data</label><input type="date" id="d-data"></div>
+        <div class="il"><label>Categoria</label><select id="d-cat"><option>Imposto / ISS / Simples</option><option>Contabilidade</option><option>Custo de projeto</option><option>Marketing</option><option>Software</option><option>Pró-labore</option><option>Outro</option></select></div>
+        <div class="il"><label>Forma pgto</label><select id="d-forma"><option>PIX</option><option>Boleto</option><option>Cartão PJ</option><option>Cartão PF (reembolso)</option></select></div>
+        <div class="il"><label>Status</label><select id="d-status"><option value="pago">Pago</option><option value="previsto">Previsto</option></select></div>
+        <div class="il"><label>Mês ref.</label><input type="month" id="d-mes"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-p" onclick="addDesp()">Salvar despesa</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- COMERCIAL -->
+<div class="pane" id="p-comercial">
+  <div class="ph"><div><h1>Comercial</h1><div class="sub">Análise de vendas e performance</div></div>
+    <div class="ph-r"><button class="btn btn-exp" onclick="exportPDF()">Exportar PDF</button></div></div>
+  <div class="sec"><div class="g4" id="com-metrics"></div></div>
+  <div class="sec"><div class="g2">
+    <div><div class="sec-lbl">Por tipo de projeto</div>
+      <div class="card"><div class="chart-wrap" style="height:220px"><canvas id="chart-tipos" role="img" aria-label="Faturamento por tipo">Por tipo.</canvas></div></div>
+    </div>
+    <div><div class="sec-lbl">Margem por projeto</div><div id="com-margem"></div></div>
+  </div></div>
+  <div class="sec"><div class="sec-lbl">Meta vs. realizado</div><div class="card" id="com-meta"></div></div>
+</div>
+
+<!-- RELATÓRIOS -->
+<div class="pane" id="p-rel">
+  <div class="ph"><div><h1>Relatórios semanais</h1><div class="sub">Salve e exporte em PDF para enviar ao Igor</div></div></div>
+  <div class="sec"><div class="sec-lbl">Criar relatório</div>
+    <div class="card">
+      <div class="fg">
+        <div class="il"><label>Semana</label><input type="text" id="r-sem" placeholder="05 a 09/Mai/2026"></div>
+        <div class="il"><label>Mês ref.</label><input type="month" id="r-mes"></div>
+        <div class="il"><label>Caixa atual (R$)</label><input type="number" id="r-cx" step="0.01"></div>
+      </div>
+      <div class="il" style="margin-bottom:10px"><label>Alertas e destaques</label><textarea id="r-alert" placeholder="Vencimentos, entradas confirmadas, pendências..."></textarea></div>
+      <div class="il" style="margin-bottom:10px"><label>Ação para o Igor esta semana</label><input type="text" id="r-acao" placeholder="Uma coisa concreta que ele precisa fazer"></div>
+      <div class="il" style="margin-bottom:0"><label>Projeção próxima semana</label><textarea id="r-proj" placeholder="O que entra, o que sai, saldo esperado..."></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="salvarRel()">Salvar relatório</button>
+        <button class="btn btn-exp" onclick="exportPDF()">Gerar PDF para Igor</button>
+      </div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-lbl">Relatórios anteriores</div><div id="rel-lista"></div></div>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="pane" id="p-hist">
+  <div class="ph"><div><h1>Histórico</h1><div class="sub">Todas as alterações registradas no sistema</div></div></div>
+  <div class="sec"><div class="card"><div id="hist-lista"><div class="loading-row">Carregando...</div></div></div></div>
+</div>
+
+<!-- CONFIG -->
+<div class="pane" id="p-cfg">
+  <div class="ph"><div><h1>Configurações</h1><div class="sub">Parâmetros do cliente</div></div></div>
+  <div class="sec"><div class="sec-lbl">URL do Google Apps Script</div>
+    <div class="card">
+      <div class="il"><label>Cole a URL do seu Apps Script aqui</label>
+        <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/XXXX/exec">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="salvarURL()">Salvar URL</button>
+        <button class="btn" onclick="testarConexao()">Testar conexão</button>
+        <button class="btn" onclick="setupInicial()">Carregar dados iniciais do Igor</button>
+      </div>
+      <div id="url-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+    </div>
+  </div>
+  <div class="sec"><div class="sec-lbl">Parâmetros financeiros</div>
+    <div class="card">
+      <div class="fg">
+        <div class="il"><label>Saldo inicial PJ (R$)</label><input type="number" id="cfg-saldo" step="0.01"></div>
+        <div class="il"><label>Pró-labore mensal (R$)</label><input type="number" id="cfg-prl" step="0.01"></div>
+        <div class="il"><label>Reserva mínima PJ (R$)</label><input type="number" id="cfg-res" step="0.01"></div>
+        <div class="il"><label>Dia pró-labore</label><input type="number" id="cfg-dia" min="1" max="28"></div>
+        <div class="il"><label>ISS mensal (R$)</label><input type="number" id="cfg-iss" step="0.01"></div>
+        <div class="il"><label>Contabilidade mensal (R$)</label><input type="number" id="cfg-cont" step="0.01"></div>
+        <div class="il"><label>Meta faturamento mensal (R$)</label><input type="number" id="cfg-meta" step="0.01"></div>
+        <div class="il"><label>Margem alvo (%)</label><input type="number" id="cfg-margem" min="0" max="100"></div>
+      </div>
+      <div class="il" style="margin-bottom:0"><label>Observações</label><textarea id="cfg-obs"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="salvarCfg()">Salvar parâmetros</button>
+        <button class="btn btn-r" onclick="resetar()">Resetar todos os dados</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<div id="print-view" style="display:none"></div>
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIGURAÇÃO — URL do Apps Script
+// ============================================================
+const LS_KEY  = 'glprime_igor_v3';
+const URL_KEY = 'glprime_script_url';
+
+let SCRIPT_URL = localStorage.getItem(URL_KEY) || '';
+let STATE      = null;
+let charts     = {};
+let concResult = [];
+let mesFiltro  = 'todos';
+
+// ============================================================
+// API
+// ============================================================
+async function api(action, body = {}) {
+  if (!SCRIPT_URL) { toast('Configure a URL do Apps Script nas Configurações'); return null; }
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=' + action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, ...body }),
+      mode: 'cors'
+    });
+    return await res.json();
+  } catch(e) {
+    setSyncStatus('err', 'Erro de conexão');
+    return null;
+  }
+}
+
+async function loadData() {
+  setSyncStatus('loading', 'Sincronizando...');
+  const r = await api('getData', { mesRef: mesFiltro });
+  if (r?.ok) {
+    STATE = r;
+    setSyncStatus('ok', 'Atualizado ' + new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }));
+    await carregarMeses();
+  } else {
+    setSyncStatus('err', 'Sem conexão — modo offline');
+    STATE = getFallback();
+  }
+}
+
+function getFallback() {
+  const raw = localStorage.getItem(LS_KEY);
+  if (raw) { try { return JSON.parse(raw); } catch(_) {} }
+  return { movimentacoes:[], projetos:[], despesas:[], relatorios:[], historico:[], params: defaultParams() };
+}
+
+function setSyncStatus(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-txt');
+  dot.className = 'sync-dot' + (state === 'loading' ? ' loading' : state === 'err' ? ' err' : '');
+  txt.textContent = msg;
+}
+
+async function carregarMeses() {
+  const r = await api('getMeses');
+  if (!r?.ok) return;
+  const sel = document.getElementById('filtro-mes');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="todos">Todos os meses</option>';
+  (r.meses || []).forEach(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(y, mo - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    sel.innerHTML += `<option value="${m}" ${m === cur ? 'selected' : ''}>${label}</option>`;
+  });
+}
+
+// ============================================================
+// NAVEGAÇÃO
+// ============================================================
+function nav(el, pid) {
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
+  document.getElementById(pid).classList.add('on');
+  if (window.innerWidth <= 768) toggleMenu();
+  renderPane(pid);
+}
+
+async function filtrarMes() {
+  mesFiltro = document.getElementById('filtro-mes').value;
+  const lbl = document.getElementById('filtro-mes').options[document.getElementById('filtro-mes').selectedIndex].text;
+  document.getElementById('mes-label').textContent = lbl;
+  await loadData();
+  renderPane(document.querySelector('.pane.on')?.id || 'p-painel');
+}
+
+function renderPane(pid) {
+  const map = {
+    'p-painel': renderPainel,
+    'p-indicadores': renderIndicadores,
+    'p-caixa': renderCaixa,
+    'p-dre': renderDRE,
+    'p-mov': renderMov,
+    'p-proj': renderProjetos,
+    'p-desp': renderDespesas,
+    'p-comercial': renderComercial,
+    'p-rel': renderRelatorios,
+    'p-hist': renderHistorico,
+    'p-cfg': loadCfg
+  };
+  if (map[pid]) map[pid]();
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmt(v) { return 'R$ ' + Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function fdt(s) { if (!s) return '—'; const p = String(s).split('T')[0].split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : s; }
+function toast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2800); }
+function defaultParams() { return { saldo:8966, prl:2500, res:3000, dia:5, iss:86.20, cont:120, meta:6000, margem:50, obs:'' }; }
+
+function mkChart(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), cfg);
+}
+
+function calcBase() {
+  if (!STATE) return { entR:0, entP:0, saiR:0, caixa:0, projetos:[], cfg:defaultParams() };
+  const movs  = STATE.movimentacoes || [];
+  const cfg   = STATE.params || defaultParams();
+  const entR  = movs.filter(m=>m['Tipo']==='entrada' && m['Status']==='realizado').reduce((s,m)=>s+Number(m['Valor']||0),0);
+  const entP  = movs.filter(m=>m['Tipo']==='entrada' && m['Status']==='previsto').reduce((s,m)=>s+Number(m['Valor']||0),0);
+  const saiR  = movs.filter(m=>m['Tipo']==='saida'   && m['Status']==='realizado').reduce((s,m)=>s+Number(m['Valor']||0),0);
+  const rend  = movs.filter(m=>m['Tipo']==='rendimento').reduce((s,m)=>s+Number(m['Valor']||0),0);
+  const caixa = Number(cfg.saldo||0) + entR - saiR + rend;
+  return { entR, entP, saiR, rend, caixa, cfg, projetos: STATE.projetos||[], movs };
+}
+
+function isDark() { return matchMedia('(prefers-color-scheme:dark)').matches; }
+function chartColors() { return { grid: isDark()?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)', text: isDark()?'#9a9690':'#6a6860' }; }
+
+// ============================================================
+// PAINEL
+// ============================================================
+function renderPainel() {
+  const { entR, entP, saiR, caixa, projetos, cfg } = calcBase();
+  const ativos  = projetos.filter(p=>p['Status']==='ativo'||p['Status']==='aguardando').length;
+  const margPct = entR>0 ? Math.round(((entR-saiR)/entR)*100) : 0;
+  const metaPct = Math.min(100, Math.round((entR/Number(cfg.meta||6000))*100));
+  const resPct  = Math.min(100, Math.round((caixa/Number(cfg.res||3000))*100));
+  const per     = mesFiltro==='todos' ? 'Mar–Mai 2026' : document.getElementById('filtro-mes').options[document.getElementById('filtro-mes').selectedIndex]?.text||'';
+  document.getElementById('painel-periodo').textContent = per;
+
+  document.getElementById('painel-metrics').innerHTML = `
+    <div class="mc"><div class="lbl">Caixa PJ</div><div class="val cv">${fmt(caixa)}</div><div class="sub">Saldo operacional</div></div>
+    <div class="mc"><div class="lbl">Entradas realizadas</div><div class="val cv">${fmt(entR)}</div></div>
+    <div class="mc"><div class="lbl">Saídas realizadas</div><div class="val rv">${fmt(saiR)}</div></div>
+    <div class="mc"><div class="lbl">Previstas</div><div class="val yv">${fmt(entP)}</div></div>
+    <div class="mc"><div class="lbl">Projetos ativos</div><div class="val">${ativos}</div></div>
+    <div class="mc"><div class="lbl">Pró-labore</div><div class="val bv">${fmt(cfg.prl||2500)}</div><div class="sub">Dia ${cfg.dia||5}</div></div>`;
+
+  document.getElementById('painel-saude').innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Meta faturamento</span><span>${fmt(entR)} / ${fmt(cfg.meta||6000)} (${metaPct}%)</span></div>
+      <div class="bar-w"><div class="bar-f" style="width:${metaPct}%;background:${metaPct>=100?'var(--green)':metaPct>=60?'var(--yellow)':'var(--red)'}"></div></div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Margem operacional</span><span>${margPct}% (alvo ${cfg.margem||50}%)</span></div>
+      <div class="bar-w"><div class="bar-f" style="width:${Math.min(100,margPct)}%;background:${margPct>=(cfg.margem||50)?'var(--green)':'var(--red)'}"></div></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">Reserva mínima</span><span>${fmt(caixa)} / mín. ${fmt(cfg.res||3000)}</span></div>
+      <div class="bar-w"><div class="bar-f" style="width:${resPct}%;background:var(--blue)"></div></div>
+    </div>`;
+
+  let al = '';
+  if (entP > 0) al += `<div class="alert ay">Entrada prevista de ${fmt(entP)} pendente de confirmação.</div>`;
+  al += `<div class="alert ay">ISS + Daniel Santo vencem 10/Mai — aprox. R$ 197.</div>`;
+  al += `<div class="alert ag">Caixa saudável. ${ativos} projeto(s) em andamento.</div>`;
+  if (caixa < Number(cfg.res||3000)) al += `<div class="alert ar">Caixa abaixo da reserva mínima de ${fmt(cfg.res)}.</div>`;
+  document.getElementById('painel-alertas').innerHTML = al;
+
+  const movs = (STATE?.movimentacoes||[]).slice().sort((a,b)=>String(b['Data']).localeCompare(String(a['Data']))).slice(0,7);
+  document.getElementById('painel-mov').innerHTML = movs.map(m => `<tr>
+    <td>${fdt(m['Data'])}</td><td>${m['Descrição']||m['Descricao']||'—'}</td>
+    <td><span class="bx bx-n">${m['Categoria']||'—'}</span></td>
+    <td class="${m['Tipo']==='saida'?'rv':'cv'}">${m['Tipo']==='saida'?'−':'+'}${fmt(m['Valor'])}</td>
+    <td><span class="bx ${m['Status']==='realizado'?'bx-g':m['Status']==='previsto'?'bx-y':'bx-r'}">${m['Status']}</span></td>
+  </tr>`).join('') || '<tr><td colspan="5" class="empty">Nenhuma movimentação</td></tr>';
+}
+
+// ============================================================
+// INDICADORES HISTÓRICOS
+// ============================================================
+async function renderIndicadores() {
+  const r = await api('getIndicadores');
+  if (!r?.ok) { document.getElementById('ind-metrics').innerHTML='<div class="empty">Conecte ao Google Sheets para ver o histórico</div>'; return; }
+  const { meses, entradas, saidas, resultados, projetos: pMes } = r;
+  const fat = entradas.reduce((s,v)=>s+v,0);
+  const melhor = entradas.length ? Math.max(...entradas) : 0;
+  const mi = entradas.indexOf(melhor);
+  document.getElementById('ind-metrics').innerHTML = `
+    <div class="mc"><div class="lbl">Faturamento total histórico</div><div class="val cv">${fmt(fat)}</div></div>
+    <div class="mc"><div class="lbl">Melhor mês</div><div class="val">${fmt(melhor)}</div><div class="sub">${meses[mi]||'—'}</div></div>
+    <div class="mc"><div class="lbl">Meses registrados</div><div class="val">${meses.length}</div></div>
+    <div class="mc"><div class="lbl">Total de projetos</div><div class="val">${pMes.reduce((s,v)=>s+v,0)}</div></div>`;
+  const c = chartColors();
+  const labels = meses.map(m => { const p=m.split('-'); return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][Number(p[1])-1]+'/'+p[0].slice(2); });
+  mkChart('chart-ind',{type:'bar',data:{labels,datasets:[
+    {label:'Entradas',data:entradas,backgroundColor:'#1a7a4a',borderRadius:4,borderSkipped:false},
+    {label:'Saídas',data:saidas,backgroundColor:'#b83232',borderRadius:4,borderSkipped:false},
+    {label:'Resultado',data:resultados,type:'line',borderColor:'#1a4fa8',backgroundColor:'rgba(26,79,168,.08)',tension:.35,pointRadius:4,pointBackgroundColor:'#1a4fa8',fill:true}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11},callback:v=>'R$'+Number(v).toLocaleString('pt-BR')}}}}});
+  mkChart('chart-proj-hist',{type:'bar',data:{labels,datasets:[{label:'Projetos',data:pMes,backgroundColor:'#1a4fa8',borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11},stepSize:1}}}}});
+}
+
+// ============================================================
+// FLUXO DE CAIXA
+// ============================================================
+function renderCaixa() {
+  const r = await_indicadores_sync();
+  const movs = STATE?.movimentacoes||[];
+  const porMes = {};
+  movs.forEach(m => {
+    const mes = m['Mês Ref'] || String(m['Data']).substring(0,7);
+    if (!porMes[mes]) porMes[mes] = { ent:0, sai:0 };
+    if (m['Tipo']==='entrada' && m['Status']==='realizado') porMes[mes].ent += Number(m['Valor']||0);
+    if (m['Tipo']==='saida'   && m['Status']==='realizado') porMes[mes].sai += Number(m['Valor']||0);
+  });
+  const meses   = Object.keys(porMes).sort();
+  const entradas = meses.map(m=>porMes[m].ent);
+  const saidas   = meses.map(m=>porMes[m].sai);
+  const labels   = meses.map(m=>{ const p=m.split('-'); return ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][Number(p[1])-1]+'/'+p[0].slice(2); });
+  const c = chartColors();
+  mkChart('chart-cx',{type:'bar',data:{labels,datasets:[
+    {label:'Entradas',data:entradas,backgroundColor:'#1a7a4a',borderRadius:4,borderSkipped:false},
+    {label:'Saídas',data:saidas,backgroundColor:'#b83232',borderRadius:4,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11},callback:v=>'R$'+Number(v).toLocaleString('pt-BR')}}}}});
+  let acc = Number(STATE?.params?.saldo||8966);
+  document.getElementById('cx-tbody').innerHTML = meses.map((m,i)=>{
+    const res = entradas[i]-saidas[i]; acc+=res;
+    return `<tr><td><strong>${labels[i]}</strong></td><td class="cv">${fmt(entradas[i])}</td><td class="rv">${fmt(saidas[i])}</td><td class="${res>=0?'cv':'rv'}">${res>=0?'+':''}${fmt(res)}</td><td><strong>${fmt(acc)}</strong></td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">Nenhum dado para este período</td></tr>';
+}
+function await_indicadores_sync(){}
+
+// ============================================================
+// DRE
+// ============================================================
+function renderDRE() {
+  const { entR, saiR, cfg } = calcBase();
+  const imp   = Math.round(saiR * 0.28 * 100) / 100;
+  const cdir  = Math.round(saiR * 0.22 * 100) / 100;
+  const desp  = Math.round(saiR * 0.50 * 100) / 100;
+  const rl    = entR - imp;
+  const rb    = rl - cdir;
+  const lucro = rb - desp - Number(cfg.prl||2500);
+  document.getElementById('dre-content').innerHTML = `
+    <table><tbody style="font-size:13px">
+      <tr><td style="color:var(--text2);padding:8px 0">Receita bruta</td><td style="text-align:right;font-weight:500" class="cv">${fmt(entR)}</td></tr>
+      <tr><td style="color:var(--text3);padding:5px 0 5px 12px">(-) Impostos est.</td><td style="text-align:right" class="rv">− ${fmt(imp)}</td></tr>
+      <tr style="border-top:0.5px solid var(--border)"><td style="padding:7px 0;font-weight:500">= Receita líquida</td><td style="text-align:right;font-weight:500">${fmt(rl)}</td></tr>
+      <tr><td style="color:var(--text3);padding:5px 0 5px 12px">(-) Custos diretos</td><td style="text-align:right" class="rv">− ${fmt(cdir)}</td></tr>
+      <tr style="border-top:0.5px solid var(--border)"><td style="padding:7px 0;font-weight:500">= Resultado bruto</td><td style="text-align:right;font-weight:500">${fmt(rb)}</td></tr>
+      <tr><td style="color:var(--text3);padding:5px 0 5px 12px">(-) Desp. operacionais</td><td style="text-align:right" class="rv">− ${fmt(desp)}</td></tr>
+      <tr><td style="color:var(--text3);padding:5px 0 5px 12px">(-) Pró-labore</td><td style="text-align:right" class="rv">− ${fmt(cfg.prl||2500)}</td></tr>
+      <tr style="border-top:1px solid var(--border2)"><td style="padding:9px 0;font-weight:500">= Resultado líquido</td><td style="text-align:right;font-weight:500" class="${lucro>=0?'cv':'rv'}">${fmt(lucro)}</td></tr>
+    </tbody></table>`;
+  const c = chartColors();
+  mkChart('chart-dre',{type:'bar',data:{labels:['Receita','Custos','Resultado'],datasets:[{data:[entR,saiR,entR-saiR],backgroundColor:['#1a4fa8','#b83232','#1a7a4a'],borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:11},callback:v=>'R$'+Number(v).toLocaleString('pt-BR')}}}}});
+}
+
+// ============================================================
+// CONCILIAÇÃO IA
+// ============================================================
+async function conciliarIA() {
+  const texto = document.getElementById('extrato-texto').value.trim();
+  if (!texto) { toast('Cole o texto do extrato primeiro'); return; }
+  const movs = STATE?.movimentacoes || [];
+  const mesRef = document.getElementById('conc-mes-ref').value;
+  const movsFiltradas = movs.filter(m => {
+    const mes = m['Mês Ref'] || String(m['Data']).substring(0,7);
+    return mes === mesRef;
+  });
+  const resultDiv = document.getElementById('conc-result');
+  resultDiv.innerHTML = '<div class="ai-thinking"><div class="ai-spinner"></div>A IA está lendo o extrato e cruzando com os lançamentos...</div>';
+  document.getElementById('conc-result-sec').style.display = 'block';
+
+  try {
+    const prompt = `Você é um sistema de conciliação bancária BPO. Analise o extrato bancário abaixo e cruze com os lançamentos já registrados no sistema.
+
+EXTRATO BANCÁRIO (texto copiado do banco):
+${texto}
+
+LANÇAMENTOS JÁ REGISTRADOS NO SISTEMA (${mesRef}):
+${movsFiltradas.map(m=>`- ${m['Data']} | ${m['Descrição']||m['Descricao']} | ${m['Tipo']} | R$ ${m['Valor']} | ${m['Status']}`).join('\n') || 'Nenhum lançamento registrado para este mês'}
+
+TAREFA:
+1. Leia cada linha do extrato e tente identificar o valor, data e descrição
+2. Para cada item do extrato, verifique se já existe um lançamento correspondente no sistema
+3. Classifique cada item como:
+   - "conciliado": item do extrato bate com lançamento existente (valor e descrição compatíveis)
+   - "divergencia": item existe nos dois mas com valor ou data diferente
+   - "nao_lancado": item está no extrato mas NÃO está nos lançamentos — precisa ser registrado
+4. Retorne APENAS um JSON válido, sem texto antes ou depois, neste formato exato:
+
+{
+  "resumo": {
+    "total_extrato": 0,
+    "conciliados": 0,
+    "divergencias": 0,
+    "nao_lancados": 0
+  },
+  "itens": [
+    {
+      "status": "conciliado|divergencia|nao_lancado",
+      "data": "dd/mm/aaaa",
+      "descricao": "descrição do item no extrato",
+      "valor": 0.00,
+      "tipo": "entrada|saida",
+      "observacao": "explicação breve se divergência ou não lançado",
+      "categoria_sugerida": "categoria para lançar no sistema"
+    }
+  ]
+}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const txt  = data.content?.[0]?.text || '';
+    const json = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    concResult = json.itens || [];
+    renderConcResult(json);
+  } catch(e) {
+    resultDiv.innerHTML = `<div class="alert ar">Erro ao processar: ${e.message}. Verifique se o texto do extrato está legível.</div>`;
+  }
+}
+
+function renderConcResult(json) {
+  const { resumo, itens } = json;
+  document.getElementById('conc-resumo-metrics').innerHTML = `
+    <div class="mc"><div class="lbl">Total no extrato</div><div class="val">${resumo.total_extrato||itens.length}</div></div>
+    <div class="mc"><div class="lbl">Conciliados</div><div class="val cv">${resumo.conciliados||0}</div></div>
+    <div class="mc"><div class="lbl">Divergências</div><div class="val yv">${resumo.divergencias||0}</div></div>
+    <div class="mc"><div class="lbl">Não lançados</div><div class="val rv">${resumo.nao_lancados||0}</div></div>`;
+  const div = document.getElementById('conc-result');
+  if (!itens.length) { div.innerHTML='<div class="empty">Nenhum item processado.</div>'; return; }
+  div.innerHTML = itens.map((it,i) => `
+    <div class="conc-item ${it.status==='conciliado'?'ok':it.status==='divergencia'?'div':'novo'}">
+      <div class="conc-ico">${it.status==='conciliado'?'✓':it.status==='divergencia'?'⚠':'+' }</div>
+      <div class="conc-txt">
+        <div class="t">${it.data} — ${it.descricao} <strong>${it.tipo==='saida'?'−':'+'}${fmt(it.valor)}</strong></div>
+        <div class="s">${it.status==='conciliado'?'Conciliado com lançamento existente':it.observacao||''}
+          ${it.status==='nao_lancado'?`<br>Categoria sugerida: <strong>${it.categoria_sugerida||'Verificar'}</strong>`:''}
+        </div>
+      </div>
+      ${it.status==='nao_lancado'?`<button class="btn btn-sm btn-p" onclick="lancarDoExtrato(${i})">Lançar</button>`:''}
+    </div>`).join('');
+}
+
+async function lancarDoExtrato(idx) {
+  const it = concResult[idx];
+  if (!it) return;
+  const mesRef = document.getElementById('conc-mes-ref').value;
+  const data = {
+    'Data': it.data.split('/').reverse().join('-'),
+    'Descrição': it.descricao,
+    'Categoria': it.categoria_sugerida || 'Outro',
+    'Tipo': it.tipo,
+    'Valor': it.valor,
+    'Status': 'realizado',
+    'Mês Ref': mesRef,
+    'Observação': 'Lançado via conciliação IA'
+  };
+  const r = await api('addMov', { data });
+  if (r?.ok) {
+    toast('Lançamento adicionado!');
+    concResult[idx].status = 'conciliado';
+    await loadData();
+  }
+}
+
+async function salvarConciliacao() {
+  if (!concResult.length) { toast('Nenhum resultado para salvar'); return; }
+  const itens = concResult.map(it => ({
+    'Data': it.data, 'Descrição Extrato': it.descricao, 'Valor Extrato': it.valor,
+    'Status': it.status, 'Observação': it.observacao || ''
+  }));
+  const r = await api('salvarConciliacao', { itens });
+  if (r?.ok) { toast('Conciliação salva no sistema!'); }
+}
+
+function limparConc() {
+  document.getElementById('extrato-texto').value = '';
+  document.getElementById('conc-result-sec').style.display = 'none';
+  document.getElementById('conc-result').innerHTML = '';
+  concResult = [];
+}
+
+// ============================================================
+// MOV / PROJ / DESP
+// ============================================================
+function renderMov() {
+  const movs = (STATE?.movimentacoes||[]).slice().sort((a,b)=>String(b['Data']).localeCompare(String(a['Data'])));
+  document.getElementById('mov-lista').innerHTML = movs.length ? `<div class="card"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>`+
+    movs.map(m=>`<tr>
+      <td>${fdt(m['Data'])}</td><td>${m['Descrição']||m['Descricao']||'—'}</td>
+      <td><span class="bx bx-n">${m['Categoria']||'—'}</span></td>
+      <td><span class="bx ${m['Tipo']==='entrada'?'bx-g':m['Tipo']==='rendimento'?'bx-b':'bx-r'}">${m['Tipo']}</span></td>
+      <td class="${m['Tipo']==='saida'?'rv':'cv'}">${m['Tipo']==='saida'?'−':'+'}${fmt(m['Valor'])}</td>
+      <td><span class="bx ${m['Status']==='realizado'?'bx-g':m['Status']==='previsto'?'bx-y':'bx-r'}">${m['Status']}</span></td>
+      <td><button class="btn btn-sm btn-r" onclick="delMov('${m['ID']}')">×</button></td>
+    </tr>`).join('')+'</tbody></table></div>' : '<div class="empty">Nenhuma movimentação no período</div>';
+}
+
+function renderProjetos() {
+  const projs = STATE?.projetos || [];
+  const sb = s => `<span class="bx ${s==='ativo'?'bx-b':s==='concluido'?'bx-g':s==='aguardando'?'bx-y':'bx-n'}">${s}</span>`;
+  document.getElementById('proj-lista').innerHTML = projs.length ? `<div class="card"><table><thead><tr><th>Cliente</th><th>Tipo</th><th>Valor</th><th>Custo</th><th>Margem</th><th>Status</th><th></th></tr></thead><tbody>`+
+    projs.map(p=>{const mg=p['Valor Total']>0?Math.round(((p['Valor Total']-p['Custo'])/p['Valor Total'])*100):0;return`<tr>
+      <td><strong>${p['Cliente']}</strong></td><td>${p['Tipo']}</td>
+      <td>${fmt(p['Valor Total'])}</td><td>${fmt(p['Custo'])}</td>
+      <td><span class="bx ${mg>=50?'bx-g':mg>=30?'bx-y':'bx-r'}">${mg}%</span></td>
+      <td>${sb(p['Status'])}</td>
+      <td><button class="btn btn-sm btn-r" onclick="delProj('${p['ID']}')">×</button></td>
+    </tr>`;}).join('')+'</tbody></table></div>' : '<div class="empty">Nenhum projeto no período</div>';
+}
+
+function renderDespesas() {
+  const desps = STATE?.despesas || [];
+  document.getElementById('desp-lista').innerHTML = desps.length ? `<div class="card"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th><th></th></tr></thead><tbody>`+
+    desps.map(d=>`<tr>
+      <td>${fdt(d['Data'])}</td><td>${d['Descrição']||d['Descricao']||'—'}</td>
+      <td><span class="bx bx-n">${d['Categoria']||'—'}</span></td>
+      <td class="rv">− ${fmt(d['Valor'])}</td>
+      <td><span class="bx ${d['Status']==='pago'?'bx-g':'bx-y'}">${d['Status']}</span></td>
+      <td><button class="btn btn-sm btn-r" onclick="delDesp('${d['ID']}')">×</button></td>
+    </tr>`).join('')+'</tbody></table></div>' : '<div class="empty">Nenhuma despesa no período</div>';
+}
+
+function renderComercial() {
+  const projs = STATE?.projetos || [];
+  const cfg   = STATE?.params || defaultParams();
+  const fat   = projs.reduce((s,p)=>s+Number(p['Valor Total']||0),0);
+  const tick  = projs.length ? fat/projs.length : 0;
+  const tipos = {};
+  projs.forEach(p=>{ tipos[p['Tipo']]=(tipos[p['Tipo']]||0)+Number(p['Valor Total']||0); });
+  document.getElementById('com-metrics').innerHTML = `
+    <div class="mc"><div class="lbl">Faturamento total</div><div class="val cv">${fmt(fat)}</div></div>
+    <div class="mc"><div class="lbl">Ticket médio</div><div class="val">${fmt(tick)}</div></div>
+    <div class="mc"><div class="lbl">Projetos</div><div class="val">${projs.length}</div></div>
+    <div class="mc"><div class="lbl">Concluídos</div><div class="val">${projs.filter(p=>p['Status']==='concluido').length}</div></div>`;
+  const cores=['#1a4fa8','#1a7a4a','#8a5e00','#b83232','#6b39c2'];
+  mkChart('chart-tipos',{type:'doughnut',data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),backgroundColor:cores,borderWidth:3,borderColor:isDark()?'#1c1c19':'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}});
+  document.getElementById('com-margem').innerHTML = `<div class="card"><table><thead><tr><th>Cliente</th><th>Valor</th><th>Lucro</th><th>Margem</th></tr></thead><tbody>`+
+    projs.map(p=>{const mg=p['Valor Total']>0?Math.round(((p['Valor Total']-p['Custo'])/p['Valor Total'])*100):0;return`<tr>
+      <td>${p['Cliente']}</td><td>${fmt(p['Valor Total'])}</td>
+      <td class="cv">${fmt(p['Valor Total']-p['Custo'])}</td>
+      <td><span class="bx ${mg>=50?'bx-g':mg>=30?'bx-y':'bx-r'}">${mg}%</span></td>
+    </tr>`;}).join('')+'</tbody></table></div>';
+  const metaPct = Math.min(100,Math.round((fat/Number(cfg.meta||6000))*100));
+  document.getElementById('com-meta').innerHTML = `
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px">Faturamento vs. meta (${fmt(cfg.meta||6000)}/mês)</div>
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text2)">Realizado</span><span>${fmt(fat)} (${metaPct}%)</span></div>
+    <div class="bar-w"><div class="bar-f" style="width:${metaPct}%;background:${metaPct>=100?'var(--green)':metaPct>=60?'var(--yellow)':'var(--red)'}"></div></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">${metaPct>=100?'Meta atingida!':'Faltam '+fmt(Number(cfg.meta||6000)-fat)+' para a meta'}</div>`;
+}
+
+function renderRelatorios() {
+  const rels = (STATE?.relatorios||[]).slice().reverse();
+  document.getElementById('rel-lista').innerHTML = rels.length ? rels.map(r=>`
+    <div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px">${r['Semana']}</strong><span class="bx bx-g">Publicado</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Caixa: <strong style="color:var(--text)">${fmt(r['Caixa'])}</strong></div>
+      ${r['Alertas']?`<div class="alert ay">${r['Alertas']}</div>`:''}
+      ${r['Ação']?`<div class="alert ab">Ação: ${r['Ação']}</div>`:''}
+      ${r['Projeção']?`<div class="alert ag">Próxima semana: ${r['Projeção']}</div>`:''}
+    </div>`).join('') : '<div class="empty">Nenhum relatório publicado ainda.</div>';
+}
+
+function renderHistorico() {
+  const hist = STATE?.historico || [];
+  document.getElementById('hist-lista').innerHTML = hist.length ? hist.map(h=>`
+    <div class="hist-item">
+      <div class="hist-dot"></div>
+      <div>
+        <div style="font-size:13px">${h['Ação']||h['acao']||'—'} — ${h['Detalhes']||h['detalhes']||'—'}</div>
+        <div class="hist-ts">${fdt(String(h['Timestamp']||h['ts']||'').split('T')[0])} ${String(h['Timestamp']||h['ts']||'').split('T')[1]?.substring(0,5)||''}</div>
+      </div>
+    </div>`).join('') : '<div class="empty">Nenhum histórico ainda.</div>';
+}
+
+// ============================================================
+// AÇÕES
+// ============================================================
+async function addMov() {
+  const val = parseFloat(document.getElementById('m-val').value);
+  if (!val) { toast('Informe o valor'); return; }
+  const data = {
+    'Data': document.getElementById('m-data').value || new Date().toISOString().split('T')[0],
+    'Descrição': document.getElementById('m-desc').value || 'Sem descrição',
+    'Categoria': document.getElementById('m-cat').value,
+    'Tipo': document.getElementById('m-tipo').value,
+    'Valor': val,
+    'Status': document.getElementById('m-status').value,
+    'Mês Ref': document.getElementById('m-mes').value || new Date().toISOString().substring(0,7),
+    'Observação': document.getElementById('m-obs').value
+  };
+  const r = await api('addMov', { data });
+  if (r?.ok) { toast('Lançamento salvo!'); ['m-desc','m-val','m-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); await loadData(); renderMov(); renderPainel(); }
+  else toast('Erro ao salvar: ' + (r?.error||'desconhecido'));
+}
+
+async function addProjeto() {
+  const cli = document.getElementById('pj-cli').value;
+  const val = parseFloat(document.getElementById('pj-val').value);
+  if (!cli||!val) { toast('Preencha cliente e valor'); return; }
+  const data = {
+    'Cliente': cli, 'Tipo': document.getElementById('pj-tipo').value,
+    'Valor Total': val, 'Entrada': parseFloat(document.getElementById('pj-ent').value)||0,
+    'Custo': parseFloat(document.getElementById('pj-custo').value)||0,
+    'Data Fechamento': document.getElementById('pj-data').value,
+    'Metragem m2': document.getElementById('pj-m2').value,
+    'Observações': document.getElementById('pj-obs').value,
+    'Status': document.getElementById('pj-status').value,
+    'Mês Ref': document.getElementById('pj-mes').value || new Date().toISOString().substring(0,7)
+  };
+  const r = await api('addProjeto', { data });
+  if (r?.ok) { toast('Projeto salvo!'); ['pj-cli','pj-val','pj-ent','pj-custo','pj-m2','pj-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); await loadData(); renderProjetos(); }
+  else toast('Erro: ' + (r?.error||'desconhecido'));
+}
+
+async function addDesp() {
+  const desc = document.getElementById('d-desc').value;
+  const val  = parseFloat(document.getElementById('d-val').value);
+  if (!desc||!val) { toast('Preencha descrição e valor'); return; }
+  const data = {
+    'Descrição': desc, 'Valor': val,
+    'Data': document.getElementById('d-data').value,
+    'Categoria': document.getElementById('d-cat').value,
+    'Forma Pgto': document.getElementById('d-forma').value,
+    'Status': document.getElementById('d-status').value,
+    'Mês Ref': document.getElementById('d-mes').value || new Date().toISOString().substring(0,7)
+  };
+  const r = await api('addDespesa', { data });
+  if (r?.ok) { toast('Despesa salva!'); ['d-desc','d-val'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); await loadData(); renderDespesas(); }
+  else toast('Erro: ' + (r?.error||'desconhecido'));
+}
+
+async function delMov(id)  { const r=await api('deleteMov',{id});    if(r?.ok){toast('Removido');await loadData();renderMov();renderPainel();} }
+async function delProj(id) { const r=await api('deleteProjeto',{id}); if(r?.ok){toast('Removido');await loadData();renderProjetos();} }
+async function delDesp(id) { const r=await api('deleteDespesa',{id}); if(r?.ok){toast('Removido');await loadData();renderDespesas();} }
+
+async function salvarRel() {
+  const sem = document.getElementById('r-sem').value;
+  if (!sem) { toast('Informe a semana'); return; }
+  const data = {
+    'Semana': sem,
+    'Mês Ref': document.getElementById('r-mes').value || new Date().toISOString().substring(0,7),
+    'Caixa': parseFloat(document.getElementById('r-cx').value)||0,
+    'Alertas': document.getElementById('r-alert').value,
+    'Ação': document.getElementById('r-acao').value,
+    'Projeção': document.getElementById('r-proj').value
+  };
+  const r = await api('addRelatorio', { data });
+  if (r?.ok) { toast('Relatório salvo!'); ['r-sem','r-cx','r-alert','r-acao','r-proj'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''}); await loadData(); renderRelatorios(); }
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function loadCfg() {
+  const url = localStorage.getItem(URL_KEY)||'';
+  const el = document.getElementById('cfg-url'); if(el) el.value=url;
+  const p = STATE?.params || defaultParams();
+  const map = {saldo:'cfg-saldo',prl:'cfg-prl',res:'cfg-res',dia:'cfg-dia',iss:'cfg-iss',cont:'cfg-cont',meta:'cfg-meta',margem:'cfg-margem',obs:'cfg-obs'};
+  Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=p[k]||'';});
+}
+
+function salvarURL() {
+  const url = document.getElementById('cfg-url').value.trim();
+  if (!url) { toast('Cole a URL do Apps Script'); return; }
+  SCRIPT_URL = url;
+  localStorage.setItem(URL_KEY, url);
+  toast('URL salva! Conectando...');
+  loadData().then(()=>renderPainel());
+}
+
+async function testarConexao() {
+  const r = await api('getMeses');
+  const el = document.getElementById('url-status');
+  if (r?.ok) { el.textContent='✓ Conexão OK! Meses encontrados: '+(r.meses?.length||0); el.style.color='var(--green)'; }
+  else { el.textContent='✗ Erro de conexão. Verifique a URL e o deploy.'; el.style.color='var(--red)'; }
+}
+
+async function salvarCfg() {
+  const data = {
+    saldo: parseFloat(document.getElementById('cfg-saldo').value)||8966,
+    prl:   parseFloat(document.getElementById('cfg-prl').value)||2500,
+    res:   parseFloat(document.getElementById('cfg-res').value)||3000,
+    dia:   parseInt(document.getElementById('cfg-dia').value)||5,
+    iss:   parseFloat(document.getElementById('cfg-iss').value)||86.20,
+    cont:  parseFloat(document.getElementById('cfg-cont').value)||120,
+    meta:  parseFloat(document.getElementById('cfg-meta').value)||6000,
+    margem:parseFloat(document.getElementById('cfg-margem').value)||50,
+    obs:   document.getElementById('cfg-obs').value
+  };
+  const r = await api('saveParams', { data });
+  if (r?.ok) { toast('Configurações salvas!'); await loadData(); }
+  else toast('Erro ao salvar configurações');
+}
+
+async function setupInicial() {
+  if (!confirm('Carregar os dados iniciais do Igor (Mar-Mai/2026)?')) return;
+  setSyncStatus('loading','Carregando dados...');
+  const r = await api('setup');
+  if (r?.ok) { toast('Dados carregados!'); await loadData(); renderPainel(); }
+  else toast('Erro: '+(r?.error||'desconhecido'));
+}
+
+function resetar() {
+  if (!confirm('Apagar todos os dados locais? O Google Sheets não é afetado.')) return;
+  localStorage.removeItem(LS_KEY); toast('Dados locais limpos'); STATE=null; renderPainel();
+}
+
+// ============================================================
+// PDF EXPORT
+// ============================================================
+function exportPDF() {
+  const { caixa, entR, entP, saiR, projetos, cfg } = calcBase();
+  const ativos = projetos.filter(p=>p['Status']==='ativo'||p['Status']==='aguardando');
+  const rels   = (STATE?.relatorios||[]).slice(-1)[0];
+  const pv = document.getElementById('print-view');
+  pv.style.display = 'block';
+  pv.innerHTML = `
+    <div style="padding:2.5rem;font-family:'DM Sans',sans-serif;max-width:700px;margin:0 auto;color:#1a1a18">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;padding-bottom:1.25rem;border-bottom:1px solid #e8e6e0">
+        <div>
+          <div style="font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#a8a49c;margin-bottom:5px">GL Prime · BPO Financeiro</div>
+          <div style="font-size:24px;font-weight:300;letter-spacing:-.02em;color:#1a1a18">Igor Andrade Arquitetura</div>
+          <div style="font-size:12px;color:#a8a49c;margin-top:3px">${rels?'Semana: '+rels['Semana']:'Relatório — '+new Date().toLocaleDateString('pt-BR')}</div>
+        </div>
+        <div style="text-align:right;font-size:12px;color:#a8a49c">${new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:2rem">
+        <div style="background:#f5f4f0;border-radius:10px;padding:14px"><div style="font-size:10px;color:#a8a49c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Caixa PJ</div><div style="font-size:22px;font-weight:300;color:#1a7a4a">${fmt(caixa)}</div></div>
+        <div style="background:#f5f4f0;border-radius:10px;padding:14px"><div style="font-size:10px;color:#a8a49c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Entradas realizadas</div><div style="font-size:22px;font-weight:300;color:#1a7a4a">${fmt(entR)}</div></div>
+        <div style="background:#f5f4f0;border-radius:10px;padding:14px"><div style="font-size:10px;color:#a8a49c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">Pró-labore</div><div style="font-size:22px;font-weight:300;color:#1a4fa8">${fmt(cfg.prl||2500)}</div><div style="font-size:10px;color:#a8a49c;margin-top:4px">Dia ${cfg.dia||5} de cada mês</div></div>
+      </div>
+      ${rels&&rels['Alertas']?`<div style="background:#fdf6e3;border-left:3px solid #8a5e00;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#8a5e00">${rels['Alertas']}</div>`:''}
+      ${rels&&rels['Ação']?`<div style="background:#eef3fd;border-left:3px solid #1a4fa8;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#1a4fa8"><strong>Sua ação desta semana:</strong> ${rels['Ação']}</div>`:''}
+      ${rels&&rels['Projeção']?`<div style="background:#edf7f2;border-left:3px solid #1a7a4a;border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#1a7a4a"><strong>Próxima semana:</strong> ${rels['Projeção']}</div>`:''}
+      <div style="margin-top:1.75rem">
+        <div style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:#a8a49c;margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e8e6e0">Projetos em andamento</div>
+        ${ativos.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0ede8;font-size:13px"><span style="color:#1a1a18">${p['Cliente']} — ${p['Tipo']}</span><span style="color:#1a7a4a;font-weight:500">${fmt(p['Valor Total'])}</span></div>`).join('')||'<div style="color:#a8a49c;font-size:13px;font-style:italic">Nenhum projeto ativo</div>'}
+      </div>
+      <div style="margin-top:2rem;padding-top:1rem;border-top:0.5px solid #e8e6e0;font-size:11px;color:#a8a49c;display:flex;justify-content:space-between">
+        <span>GL Prime · BPO Financeiro</span><span>glprime.bpofinanceiro@gmail.com</span>
+      </div>
+    </div>`;
+  setTimeout(()=>{ window.print(); setTimeout(()=>{ pv.style.display='none'; pv.innerHTML=''; },500); },100);
+}
+
+// ============================================================
+// MOBILE
+// ============================================================
+function toggleMenu() {
+  document.getElementById('sb').classList.toggle('open');
+  document.getElementById('ov').classList.toggle('show');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  const savedUrl = localStorage.getItem(URL_KEY);
+  if (savedUrl) {
+    SCRIPT_URL = savedUrl;
+    await loadData();
+  } else {
+    setSyncStatus('err', 'Configure a URL do Script');
+    STATE = getFallback();
+  }
+  renderPainel();
+  document.getElementById('m-mes').value = new Date().toISOString().substring(0,7);
+  document.getElementById('pj-mes').value = new Date().toISOString().substring(0,7);
+  document.getElementById('d-mes').value = new Date().toISOString().substring(0,7);
+  document.getElementById('r-mes').value = new Date().toISOString().substring(0,7);
+}
+
+init();
+</script>
+</body>
+</html>
